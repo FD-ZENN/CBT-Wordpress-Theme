@@ -34,14 +34,26 @@ add_action('wp_enqueue_scripts', function () {
         true
     );
 
-    // cbt.js (file lokal di theme)
+    $cbt_js_path = get_template_directory() . '/assets/js/cbt.js';
+$cbt_js_ver  = file_exists($cbt_js_path) ? filemtime($cbt_js_path) : time();
+
+wp_enqueue_script(
+    'cbt-js',
+    get_template_directory_uri() . '/assets/js/cbt.js',
+    ['axios', 'sweetalert2'],
+    $cbt_js_ver,
+    true
+);
+
+    // setelah enqueue cbt.js
     wp_enqueue_script(
-        'cbt-js',
-        get_template_directory_uri() . '/assets/js/cbt.js',
-        ['axios', 'sweetalert2'],
+        'cbt-security',
+        get_template_directory_uri() . '/assets/js/cbt-security.js',
+        array('sweetalert2'), // biar Swal sudah ada
         '1.0',
         true
     );
+
 
     // Data global CBT untuk JS
     $token_state = [
@@ -1691,6 +1703,69 @@ add_action('rest_api_init', function () {
         ]
     );
 });
+
+
+add_action('rest_api_init', function () {
+    register_rest_route('cbt/v1', '/excel/results', [
+        'methods'  => 'GET',
+        'callback' => 'cbt_bima_excel_results',
+        'permission_callback' => '__return_true',
+    ]);
+});
+function cbt_bima_excel_results(WP_REST_Request $req)
+{
+    global $wpdb;
+
+    $excel_key = $req->get_param('excel_key');
+    $valid_key = get_option('cbt_excel_key', '123');
+    if ($excel_key !== $valid_key) {
+        return new WP_Error('cbt_excel_key_invalid', 'Excel Key salah.', ['status' => 403]);
+    }
+
+    $test_code = $req->get_param('test_code');
+    if (!$test_code) {
+        return new WP_Error('cbt_test_code_empty', 'Kode test kosong.', ['status' => 400]);
+    }
+
+    // Ambil test
+    $test = cbt_bima_get_test_by_code($test_code);
+    if (!$test) {
+        return new WP_Error('cbt_test_not_found', 'Tes tidak ditemukan.', ['status' => 404]);
+    }
+
+    $table_sessions = $wpdb->prefix . 'cbt_sessions';
+    $table_students = $wpdb->prefix . 'cbt_students';
+
+    // Ambil daftar sesi & nilai
+    $sql = "
+        SELECT 
+            s.id          AS session_id,
+            s.score       AS score,
+            s.status      AS status,
+            st.full_name  AS full_name,
+            st.username   AS username,
+            st.nis        AS nis,
+            st.session_label AS sesi,
+            st.ket1       AS ket1,
+            st.ket2       AS ket2,
+            st.ket3       AS ket3
+        FROM $table_sessions s
+        JOIN $table_students st ON st.id = s.student_id
+        WHERE s.test_id = %d
+        ORDER BY st.full_name ASC
+    ";
+
+    $rows = $wpdb->get_results(
+        $wpdb->prepare($sql, $test['id']),
+        ARRAY_A
+    );
+
+    return [
+        'test_code' => $test['code'],
+        'test_name' => $test['name'],
+        'rows'      => $rows,
+    ];
+}
 
 /**
  * Endpoint cepat: impor dari Excel
