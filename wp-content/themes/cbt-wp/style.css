@@ -1,0 +1,161 @@
+/*
+Theme Name: CBT Bimasoft Clone
+Theme URI: http://example.com/
+Author: Yang Mulia Raja & GPT
+Description: Theme WordPress khusus CBT mirip Bimasoft (UNBK-style) dengan integrasi Excel/Word.
+Version: 1.0
+Text Domain: cbt-bima
+*/
+
+/* ================= SHELL: cuma untuk halaman CBT ================= */
+
+/* beda warna global page biar keliatan banget */
+.cbt-theme-dark body {
+  background-color: #020617 !important; /* gelap */
+  color: #e2e8f0 !important;
+}
+
+.cbt-theme-light body {
+  background-color: #e5e7eb !important; /* abu terang */
+  color: #0f172a !important;
+}
+
+/* tombol toggle */
+.cbt-theme-toggle-btn {
+  background: rgba(15, 23, 42, 0.95) !important;
+  color: #e5e7eb !important;
+}
+.cbt-theme-light .cbt-theme-toggle-btn {
+  background: #e5e7eb !important;
+  color: #0f172a !important;
+}
+
+/* wrapper CBT */
+.cbt-exam-wrapper {
+  max-width: 64rem;
+  margin: 0 auto;
+}
+
+/* ================= PAKSA AREA CBT GANTI WARNA ================= */
+
+/* latar belakang area CBT utama */
+.cbt-theme-dark #cbt-exam-root {
+  background-color: transparent !important;
+}
+.cbt-theme-light #cbt-exam-root {
+  background-color: #e5e7eb !important;
+}
+
+/* kartu header, soal, dan panel samping yang pakai bg-slate-8xx/9xx */
+.cbt-theme-dark #cbt-exam-root .cbt-header-card,
+.cbt-theme-dark #cbt-exam-root .cbt-question-card,
+.cbt-theme-dark #cbt-exam-root .cbt-side-panel {
+  background-color: #020617 !important; /* sangat gelap */
+  border-color: #1f2937 !important;
+}
+
+/* MODE LIGHT: paksa jadi putih/abu terang meskipun HTML-nya pakai bg-slate-900 */
+.cbt-theme-light #cbt-exam-root .cbt-header-card,
+.cbt-theme-light #cbt-exam-root .cbt-question-card,
+.cbt-theme-light #cbt-exam-root .cbt-side-panel,
+.cbt-theme-light #cbt-exam-root .bg-slate-900,
+.cbt-theme-light #cbt-exam-root .bg-slate-800,
+.cbt-theme-light #cbt-exam-root .bg-slate-700 {
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+  color: #0f172a !important;
+}
+
+/* teks kecil di dalam CBT di mode terang */
+.cbt-theme-light #cbt-exam-root .text-slate-100,
+.cbt-theme-light #cbt-exam-root .text-slate-200,
+.cbt-theme-light #cbt-exam-root .text-slate-300,
+.cbt-theme-light #cbt-exam-root .text-slate-400 {
+  color: #4b5563 !important;
+}
+
+/* tombol navigasi nomor soal, supaya tetap kontras di light mode */
+.cbt-theme-light #cbt-exam-root .cbt-nav-btn {
+  border-color: #d1d5db !important;
+}
+
+/* header “Ujian CBT” biar lebih terang saat light */
+.cbt-theme-light #cbt-exam-root .cbt-header-card {
+  background: linear-gradient(to right, #e0f2fe, #ffffff) !important;
+}
+.cbt-shell {
+  min-height: 100vh;
+  background: #020617;      /* bisa ganti nanti kalau pakai toggle theme */
+  color: #e5e7eb;
+  padding: 20px 10px;
+}
+
+.cbt-exam-container {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.cbt-message-box {
+  background: #0f172a;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 24px 20px;
+  text-align: center;
+}
+
+.cbt-message-box h2 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 20px;
+}
+
+.cbt-message-box p {
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+.cbt-message-error {
+  border-color: #b91c1c;
+}
+
+.cbt-message-finished {
+  border-color: #15803d;
+}
+
+.cbt-button {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.cbt-button:hover {
+  background: #1d4ed8;
+}
+
+/* Shell utama halaman CBT */
+.cbt-theme-dark .cbt-shell {
+  background-color: #020617 !important; /* gelap, mirip bg-slate-950 */
+  color: #e2e8f0 !important;
+}
+
+.cbt-theme-light .cbt-shell {
+  background-color: #e5e7eb !important; /* terang */
+  color: #0f172a !important;
+}
+
+/* Biar isi-isi Tailwind di dalam CBT tetap ikut terang */
+.cbt-theme-light .cbt-shell .bg-slate-900,
+.cbt-theme-light .cbt-shell .bg-slate-800,
+.cbt-theme-light .cbt-shell .bg-slate-700 {
+  background-color: #ffffff !important;
+}
+
+.cbt-theme-light .cbt-shell .text-slate-100,
+.cbt-theme-light .cbt-shell .text-slate-200,
+.cbt-theme-light .cbt-shell .text-slate-300 {
+  color: #111827 !important;
+}
