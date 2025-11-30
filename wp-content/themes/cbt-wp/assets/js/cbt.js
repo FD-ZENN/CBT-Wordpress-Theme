@@ -452,13 +452,34 @@ function handleRegister() {
   }
 
   // ================= EXAM STATE =================
-  let examState = {
-    sessionId: null,
-    questions: [],
-    currentIndex: 0,
-    endTimestamp: null,
-    timerInterval: null,
-  };
+let examState = {
+  sessionId: null,
+  questions: [],
+  currentIndex: 0,
+  endTimestamp: null,
+  timerInterval: null,
+  sessionAuth: null,
+  studentName: "",
+  participantName: ""
+};
+
+// Hitung statistik jawaban (kosong & ragu)
+function getAnswerStats() {
+  let unanswered = 0;
+  let ragu = 0;
+
+  (examState.questions || []).forEach((q) => {
+    if (!q.current_answer) {
+      unanswered++;
+    }
+    if (q.is_ragu) {
+      ragu++;
+    }
+  });
+
+  return { unanswered, ragu };
+}
+
 
   // ================= NAV BUTTON CLASS =================
   function getNavBtnClass(q, idx) {
@@ -767,17 +788,25 @@ const participantName =
           ${optsHtml}
         </div>
 
-        <div class="mt-3 flex items-center justify-between gap-3 flex items-start gap-3 py-1.5 px-2  border border-slate-600/70 rounded-xl ">
-          <label class="inline-flex items-center gap-2 text-sm text-amber-500">
-            <input type="checkbox" id="cbt-ragu" class="w-4 h-4" ${
-              isRagu ? "checked" : ""
-            }>
+        <label
+          class="mt-3 flex items-center justify-between gap-3 cursor-pointer 
+                 py-1.5 px-2 border border-slate-600/70 rounded-xl"
+        >
+          <span class="inline-flex items-center gap-2 text-sm text-amber-500">
+            <input
+              type="checkbox"
+              id="cbt-ragu"
+              class="w-4 h-4 cursor-pointer"
+              ${isRagu ? "checked" : ""}
+            >
             <span>Ragu-ragu pada soal ini</span>
-          </label>
-          <div class="text-[11px] text-slate-400">
+          </span>
+        
+          <span class="text-[11px] text-slate-400">
             Gunakan <span class="font-semibold">Ragu</span> jika ingin meninjau ulang.
-          </div>
-        </div>
+          </span>
+        </label>
+
       </div>
     `;
 
@@ -867,55 +896,87 @@ const participantName =
     }
   }
 
-  // ================= FINISH / SELESAI UJIAN =================
-  function handleFinish() {
-    Swal.fire({
-      title: "Selesai Ujian?",
-      text: "Pastikan semua soal sudah Anda kerjakan. Setelah selesai Anda tidak bisa kembali mengerjakan.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Ya, Selesai",
-      cancelButtonText: "Batal",
-    }).then((res) => {
-      if (res.isConfirmed) {
-        finishExam();
-      }
-    });
+// ================= FINISH / SELESAI UJIAN =================
+function handleFinish() {
+  const stats = getAnswerStats();
+  let infoText = "Pastikan semua soal sudah Anda kerjakan.";
+
+  if (stats.unanswered > 0 || stats.ragu > 0) {
+    infoText =
+      "Ringkasan jawaban Anda:\n" +
+      "- Soal belum dijawab: " + stats.unanswered + "\n" +
+      "- Soal ditandai ragu: " + stats.ragu + "\n\n" +
+      "Anda tetap ingin menyelesaikan ujian?";
   }
 
-  function finishExam() {
-    axios
-      .post(
-        rest + "finish",
-        {
-          session_id: examState.sessionId,
-          session_auth: examState.sessionAuth,   
+  Swal.fire({
+    title: "Selesai Ujian?",
+    text: infoText,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Ya, Selesai",
+    cancelButtonText: "Batal",
+  }).then((res) => {
+    if (res.isConfirmed) {
+      finishExam();
+    }
+  });
+}
+
+function finishExam() {
+  axios
+    .post(
+      rest + "finish",
+      {
+        session_id: examState.sessionId,
+        session_auth: examState.sessionAuth || null,
+      },
+      {
+        headers: {
+          "X-WP-Nonce": nonce,
         },
-        {
-          headers: {
-            "X-WP-Nonce": nonce,
-          },
-        }
-      )
-      .then((res) => {
-        const d = res.data;
-        Swal.fire({
-          title: "Ujian Selesai",
-          html: "Nilai Anda: <b>" + (d.score || 0) + "</b>",
-          icon: "success",
-        }).then(() => {
-          window.location.href = CBT_GLOBAL.site_url;
-        });
-      })
-      .catch((err) => {
-        console.error(err);
-        Swal.fire(
-          "Error",
-          "Gagal menyelesaikan ujian. Coba lagi.",
-          "error"
-        );
+      }
+    )
+    .then((res) => {
+      const d = res.data || {};
+      const score =
+        typeof d.score !== "undefined" && d.score !== null ? d.score : 0;
+
+      Swal.fire({
+        title: "Ujian Selesai",
+        html: "Nilai Anda: <b>" + score + "</b>",
+        icon: "success",
+      }).then(() => {
+        window.location.href = CBT_GLOBAL.site_url;
       });
-  }
+    })
+    .catch((err) => {
+      console.log("Finish error RAW:", err);
+      console.log(
+        "Finish error RESPONSE DATA:",
+        err && err.response && err.response.data
+      );
+
+      let msg = "Gagal menyelesaikan ujian. Coba lagi.";
+
+      if (err.response && err.response.data) {
+        const data = err.response.data;
+
+        // 👇 ambil langsung message dari REST API WP
+        if (typeof data.message === "string" && data.message.trim() !== "") {
+          msg = data.message; // contoh: "Anda belum menjawab semua soal (0 / 30)."
+        }
+      }
+
+      Swal.fire({
+        icon: "error",
+        title: "Tidak bisa mengumpulkan",
+        text: msg,
+      });
+    });
+}
+
+
 
   // ================= TIMER =================
   function startTimer() {
